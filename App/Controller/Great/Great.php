@@ -1,13 +1,13 @@
 <?php
-namespace App\Controller\{{{controller}}};
+namespace App\Controller\Great;
 
 use App\View\View;
 
 /*
-    {{{comments}}}
+    Builder
 */
 
-class {{{controller}}}{
+class Great{
     private array $uri;
     public function __construct($uri){
         $this->uri = $uri;
@@ -18,7 +18,14 @@ class {{{controller}}}{
         (new View($this->uri));
     }
 
-    public function {{{action}}}(){
+    public function great(){
         
     }
+	
+	/*
+		Builder method
+	*/
+	private function newGreat777(){
+
+	}
 }

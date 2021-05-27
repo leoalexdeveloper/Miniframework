@@ -1,0 +1,11 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{SCRIPT_FILENAME} !-d
+    RewriteCond %{SCRIPT_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^((?!Public/).*)$ Public/index.php [NC,QSA]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^((?!Public/).*)$ Public/index.php [NC,QSA,L]
+
+    Options -Indexes
+</IfModule>

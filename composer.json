@@ -1,0 +1,17 @@
+{
+    "name": "audio/mini-framework",
+    "description": "Project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Leonardo Pereira",
+            "email": "leoalexeveloper@gmail.com"
+        }
+    ],
+    "require": {},
+    "autoload":{
+        "psr-4":{
+            "App\\": "App/"
+        }
+    }
+}

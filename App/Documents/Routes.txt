@@ -1,0 +1,3 @@
+GET home/home/
+GET casa/casa/
+GET great/great/

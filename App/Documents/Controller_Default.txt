@@ -1,0 +1,19 @@
+<?php
+namespace App\Controller\{{{controller}}};
+
+use App\View\View;
+class {{{controller}}}{
+    private array $uri;
+    public function __construct($uri){
+        $this->uri = $uri;
+        $this->view();
+    }
+
+    private function view(){
+        (new View($this->uri));
+    }
+
+    public function {{{action}}}(){
+        
+    }
+}

@@ -55,7 +55,7 @@ class RouterController{
         $uriExploded = explode("/", $this->uri);
         $this->controller = $uriExploded[0];
         $this->action = $uriExploded[1];
-        
+    
         foreach($this->routes as $route){
             
             if(['method'=>$this->method, 'route'=>$this->controller . "/" . $this->action . "/"] === $route

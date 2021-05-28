@@ -17,8 +17,4 @@ class {{{controller}}}{
     private function view(){
         (new View($this->uri));
     }
-
-    public function {{{action}}}(){
-        
-    }
 }

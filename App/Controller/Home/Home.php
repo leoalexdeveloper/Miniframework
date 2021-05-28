@@ -2,6 +2,11 @@
 namespace App\Controller\Home;
 
 use App\View\View;
+
+/*
+    Mesma classe
+*/
+
 class Home{
     private array $uri;
     public function __construct($uri){
@@ -9,11 +14,21 @@ class Home{
         $this->view();
     }
 
-    public function home(){
-        
-    }
-
     private function view(){
         (new View($this->uri));
     }
+	
+	/*
+		Novo metodo
+	*/
+	private function novaCasa(){
+
+	}
+	
+	/*
+		Novo metodo
+	*/
+	private function novaCasa(){
+
+	}
 }

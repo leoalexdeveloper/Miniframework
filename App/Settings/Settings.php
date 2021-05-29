@@ -8,4 +8,6 @@ if(strpos(dirname(__DIR__), ":\\") > -1){
     define("SUB_FOLDER", "/");
 }
 
+
+/* Builder Settings */
 define("BUILDER_LOG", "ACTIVE");

@@ -1,4 +1,3 @@
-['method' => 'GET','route' => 'builder/check_route/'],
-['method' => 'GET','route' => 'builder/create_all/'],
-['method' => 'GET','route' => 'builder/create_action/'],
-['method' => 'GET','route' => 'builder/delete_all/'],['method' => 'GET', 'route' => 'home/novaCasa/'],
+['method' => 'GET', 'route' => 'builder/exec/'],
+['method' => 'GET', 'route' => 'home/home/'],
+['method' => 'GET', 'route' => 'leo/lua/'],

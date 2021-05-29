@@ -3,13 +3,28 @@
 namespace App\Controller\Builder;
 
 class Builder{
-    private $httpMethod;
-    private $controller;
-    private $action;
-    private $methodVisibility;
-    private $classComments;
-    private $actionComments;
-    private $builderMethod;
+    private $arguments = [
+        "className" => '',
+        "builderMethod" => '',
+        "builderAction" => '',
+        "httpMethod" => '',
+        "controller" => '',
+        "action" => '',
+        "classComments" => '',
+        "actionComments" => '',
+        "methodVisibility" => '',
+    ];
+    private $foldersPath = [
+        "routeFile" => '',
+        "controllerFile" => '',
+        "templateFile" => '',
+        "pageBodyFile" => '',
+        "pageHeadFile" => '',
+        "pageFooterFile" => '',
+        "cssFile" => '',
+        "jsFile" => '',
+        "methodPath" => '',
+    ];
     private $routeFilePath;
     private $controllerFilePath;
     private $templateFilePath;
@@ -19,281 +34,355 @@ class Builder{
     private $cssFilePath;
     private $jsFilePath;
     private $methodPath;
-    private $errors = [];
-    private array $errorsIndex = [
-        '0' => "The route exists!",
-        '1' => "Set Route first!",
-        '2' => "Controller exists!",
-        '3' => "Set Controller first!",
-        '4' => "Template exists!",
-        '5' => "Set Template first!",
-        '6' => "Pages, Body Head and Footer exists!",
-        '7' => "Set Pages Head first!",  
-        '8' => "Css exists!",
-        '9' => "Set Css first!",
-        '10' => "Js exists!",
-        '11' => "Set Js first!",
-        '12' => "Action exists!",
-        '13' => "Set Action first!",
-        '14' => "Thie controller structure not exists yet!",
-        '15' => "This route has partially initiated!",
-        '26' => "The structure for this route was already done!",
-        '27' => 'Missing Argunments: BuilderMethod / Http method / Controller / Action',
-        '28' => 'Visibility not passed',
-        '29' => 'Action not passed',
-        '20' => 'Visibility must be public, protected or private',
-        '21' => 'All folders must not exists. Delete a folder that exists and try again',
-    ];
+
+    private $builderRoutesFilePath;
+    private $productionRoutesFilePath;
 
     public function __construct($uri){
-        extract($uri);
+        
         $uri = array_values(array_filter(explode("/", str_replace(SUB_FOLDER, "", $_SERVER['REQUEST_URI']))));
+        $uriLength = count($uri);
+        $argumentsKeys = array_keys($this->arguments);
+        for($i = 0; $i < $uriLength; $i++){
+            if($argumentsKeys[$i] === 'controller'){
+                (isset($uri[$i])) ? $this->arguments[$argumentsKeys[$i]] = ucfirst($uri[$i]) : null;
+            }elseif($argumentsKeys[$i] === 'methodVisibility'){
+                (isset($uri[$i])) ? $this->arguments[$argumentsKeys[$i]] = ucfirst($uri[$i]) : "public";
+            }else{
+                (isset($uri[$i])) ? $this->arguments[$argumentsKeys[$i]] = $uri[$i] : null;
+            }
+        }
 
-        $this->builderMethod = $uri[1] ? $uri[1] : $this->throwError(21);
-        $this->httpMethod = isset($uri[2]) ? urldecode(strtoupper($uri[2])) : $this->throwError(21);
-        $this->classComments = isset($uri[3]) ? $uri[3] = ucfirst(urldecode($uri[3])) : null;
-        $this->controller = isset($uri[4]) ? $uri[4] = urldecode(ucfirst($uri[4])) : $this->throwError(21);
-        $this->action = isset($uri[5]) ? $uri[5] = urldecode($uri[5]) : lcfirst($uri[4]);
-        $this->methodVisibility = (isset($uri[6])) ? urldecode($uri[6]) : null;
-        $this->actionComments = isset($uri[7]) ? $uri[7] = ucfirst(urldecode($uri[7])) : null;
-        
-        $this->routeFilePath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Documents/Routes.txt';
-        $this->controllerFilePath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Controller/' . $this->controller . "/" . $this->controller . ".php";
-        $this->templateFilePath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/View/Templates/' . $this->controller . "/" . $this->controller . ".php";
-        $this->pageBodyFilePath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/View/Pages/' . $this->controller . "/Body.php";
-        $this->pageHeadFilePath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/View/Pages/' . $this->controller . "/Head.php";
-        $this->pageFooterFilePath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/View/Pages/' . $this->controller . "/Footer.php";
-        $this->cssFilePath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'Public/Css/' . $this->controller . "/" . $this->controller . ".css";
-        $this->jsFilePath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'Public/Js/' . $this->controller . "/" . $this->controller . ".js";
-        $this->methodPath = '\\App\\Controller\\' . $this->controller . "\\" . $this->controller;
+        $this->foldersPath = [
+            "controllerFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/Controller/" . $this->arguments["controller"] . "/" . $this->arguments["controller"] . ".php",
+            "templateFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/View/Templates/" . $this->arguments["controller"] . "/" . $this->arguments["controller"] . ".php",
+            "pageBodyFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/View/Pages/" . $this->arguments["controller"] . "/Body.php",
+            "pageHeadFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/View/Pages/" . $this->arguments["controller"] . "/Head.php",
+            "pageFooterFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/View/Pages/" . $this->arguments["controller"] . "/Footer.php",
+            "cssFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "Public/Css/" . $this->arguments["controller"] . "/" . $this->arguments["controller"] . ".css",
+            "jsFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "Public/Js/" . $this->arguments["controller"] . "/" . $this->arguments["controller"] . ".js",
+            "methodPath" => "\\App\\Controller\\" . $this->arguments["controller"] . "\\" . $this->arguments["controller"],
+        ];
 
-        
+        $this->builderFoldersPath = [
+            "controllerFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/Documents/Controller_Default.txt",
+            "templateFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/Documents/Template_Default.txt",
+            "pageBodyFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/Documents/Body_Default.txt",
+            "pageHeadFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/Documents/Head_Default.txt",
+            "pageFooterFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/Documents/Footer_Default.txt",
+            "cssFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/Documents/Css_Default.txt",
+            "jsFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/Documents/Js_Default.txt",
+        ];
+
+        $this->builderRoutesFilePath = $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/Documents/Routes.txt";
+        $this->productionRoutesFilePath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Router/Routes.php';
     }
 
-    private function throwError($error){
-        throw new \Exception($this->errorsIndex[$error]);
+    private function returnFilePath($wantedPath){
+        foreach($this->foldersPath as $key => $path){
+            
+            $remain = str_replace("File", "", $key);
+            if($remain === $wantedPath){
+                return $path;
+            }
+        }
+        return;
+    }
+
+    private function returnBuilderFilePath($wantedPath){
+        foreach($this->builderFoldersPath as $key => $path){
+            if(strpos($key, $wantedPath) > -1){
+                return $path;
+            }
+        }
+        return;
+    }
+
+    private function validateFolderPaths(){
+        $hasFolder = [];
+        
+        empty($this->checkRoute())  ? $hasFolder [] = "route " . $this->checkRoute() . " Not Exists" : $hasFolder [] = "route " . $this->checkRoute() . " Exists";
+
+        foreach($this->foldersPath as $key => $path){
+            $key = str_replace("File", "", $key);
+            if(file_exists($this->returnFilePath($key))){
+                $hasFolder [] = $key . " Exists at ". $path;
+            }else{
+                $hasFolder [] = $key . " Not Exists at ". $path;
+            }
+            if($key === 'controller' && file_exists($this->returnFilePath($key))){
+                $hasFolder [] = $this->checkClassMethod($this->foldersPath['methodPath']);
+            }
+        }
+        return $hasFolder;
+    }
+
+
+    public function exec(){
+        $errors = [];
+        switch($this->arguments["builderAction"]){
+            case "check_route":
+                if(isset($this->arguments["builderAction"]) && 
+                    isset($this->arguments["httpMethod"]) && 
+                    isset($this->arguments["controller"]) && 
+                    isset($this->arguments["action"]))
+                    {
+                        $this->check_route();
+                    }else{
+                        $errors [] = "The url must have this structure: builderAction/httpMethod/controller/action";
+                    }
+            break;
+            case "check_all_routes":
+                if(isset($this->arguments["builderAction"]) && 
+                    isset($this->arguments["httpMethod"]))
+                    {
+                        $this->check_all_routes();
+                    }else{
+                        $errors [] = "The url must have this structure: builderAction/httpMethod";
+                    }
+            break;
+            case "check_class_method":
+                if(isset($this->arguments["builderAction"]) && 
+                    isset($this->arguments["httpMethod"]) && 
+                    isset($this->arguments["controller"]) && 
+                    isset($this->arguments["action"]) &&
+                    isset($this->arguments["methodVisibility"]))
+                    {
+                        $this->check_class_method();
+                    }else{
+                        $errors [] = "The url must have this structure: builderAction/httpMethod/controller/action/methodVisibility";
+                    }
+            break;
+            case "create_all":
+                if(isset($this->arguments["builderAction"]) && 
+                    isset($this->arguments["httpMethod"]) && 
+                    isset($this->arguments["controller"]) && 
+                    isset($this->arguments["action"]) &&
+                    isset($this->arguments["methodVisibility"]))
+                    {
+                        $this->create_all();
+                    }else{
+                        $errors [] = "The url must have this structure: builderAction/httpMethod/controller/action/visibility/classComments/actionComments";
+                    }
+            break;
+            case "delete_all":
+                if(isset($this->arguments["builderAction"]) && 
+                    isset($this->arguments["httpMethod"]) && 
+                    isset($this->arguments["controller"]) && 
+                    isset($this->arguments["action"]))
+                    {
+                        $this->delete_all();
+                    }else{
+                        $errors [] = "The url must have this structure: builderAction/httpMethod/controller/action";
+                    }
+            break;
+            case "create_action":   
+                if(isset($this->arguments["builderAction"]) && 
+                    isset($this->arguments["httpMethod"]) && 
+                    isset($this->arguments["controller"]) && 
+                    isset($this->arguments["action"]) &&
+                    isset($this->arguments["methodVisibility"]))
+                    {
+                        $this->create_action();
+                    }else{
+                        $errors [] = "The url must have this structure: builderAction/httpMethod/controller/action/visibility/-/actionComments";
+                    }
+            break;
+        }
+        $this->echoABrief($errors);
     }
 
     public function check_route(){
         
         $this->checkRoute();
-        $this->checkFolderAndFilesStructure();
-        $this->checkForClassMethod();
-        $this->showStructureRelatory();
     }
 
     private function checkRoute(){
-        $this->errors = [];
-        $file = file_get_contents($this->routeFilePath);
-        $pattern = $this->httpMethod . " " . lcfirst($this->controller) . "/" . $this->action . "/";
+        $method = strtoupper($this->arguments["httpMethod"]);
+        $controller = lcfirst($this->arguments["controller"]);
+        $action = $this->arguments["action"];
+    
+        $file = file_get_contents($this->builderRoutesFilePath);
+        $pattern = "['method' => '$method', 'route' => '$controller/$action/'],";
         $file = explode("\n", $file);
+
         foreach($file as $route){
-            if(strcmp(trim($route), $pattern) === 0){
-                $this->errors [] = 0;
+            
+            if(trim($route) === trim($pattern)){
+                return $route;
             }
         }
-        (in_array(0, $this->errors) === false) ? $this->errors [] = 1 : $this->errors = $this->errors;
     }
 
-    private function checkFolderAndFilesStructure(){
-        if(file_exists($this->controllerFilePath)){
-            $this->errors [] = 2;
-        }else{
-            $this->errors [] = 3;
-        }
 
-        if(file_exists($this->templateFilePath)){
-            $this->errors [] = 4;
-        }else{
-            $this->errors [] = 5;
-        }
 
-        if(file_exists($this->pageBodyFilePath)){
-            $this->errors [] = 6;
-        }else{
-            $this->errors [] = 7;
-        }
-
-        if(file_exists($this->pageHeadFilePath)){
-            $this->errors [] = 6;
-        }else{
-            $this->errors [] = 7;
-        }
-
-        if(file_exists($this->pageFooterFilePath)){
-            $this->errors [] = 6;
-        }else{
-            $this->errors [] = 7;
-        }
-
-        if(file_exists($this->cssFilePath)){
-            $this->errors [] = 8;
-        }else{
-            $this->errors [] = 9;
-        }
-
-        if(file_exists($this->jsFilePath)){
-            $this->errors [] = 10;
-        }else{
-            $this->errors [] = 11;
-        }
+    public function check_all_routes(){
+        $this->checkAllRoutes();
     }
 
-    private function checkForClassMethod(){
+    private function checkAllRoutes(){
+        $file = file_get_contents($this->builderRoutesFilePath);
+        $file = explode(",\n", $file);
         
-        if(in_array(2, $this->errors) && isset($this->action)){
-            
-            $reflection = new \ReflectionClass($this->methodPath);
-            
-            foreach($reflection->getMethods() as $method){
-                
-                if(strcmp(trim($method->name), $this->action) === 0){
-                    $this->errors [] = 12;
-                    return;
-                }
+        foreach($file as $route){
+            $this->echoABrief($route . "<br><br>");
+        }
+    }
+
+
+
+    public function check_class_method(){
+        $hasMethod = $this->checkClassMethod($this->foldersPath['methodPath']);
+        $this->echoABrief($hasMethod);
+    }
+
+    private function checkClassMethod($path){
+        
+        $classPath = $path;
+        $classReflection = new \ReflectionClass($classPath);
+        
+        foreach($classReflection->getMethods() as $action){
+            if($this->arguments["action"] === trim($action->name)){
+                return "action " . $action->name . " Exists";
             }
         }
-        if(!in_array(12, $this->errors)){
-            $this->errors [] = 13;
-        } 
+        return;
     }
 
 
-    private function showStructureRelatory(){
-        echo "<pre>";
-        foreach($this->errors as $error){
-           echo ($this->errorsIndex[$error]) . "<br>";
-        }
-        echo "</pre>";
-    }
 
     private function addNewRoute(){
         
             $hasRoute = [];
-            $filePath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Documents/Routes.txt';
-            $fileContent = file_get_contents($filePath);
-            $controller = lcfirst($this->controller);
-            $content = "['method' => '$this->httpMethod', 'route' => '$controller/$this->action/'],\n";
+            
+            $fileContent = file_get_contents($this->builderRoutesFilePath);
+            $httpMethod = strtoupper($this->arguments["httpMethod"]);
+            $controller = lcfirst($this->arguments["controller"]);
+            $action = $this->arguments["action"];
+            
+            if(strrpos($fileContent, "\n") < strlen($fileContent)-1){
+                $content = "\n['method' => '{$httpMethod}', 'route' => '{$controller}/{$action}/'],\n";
+            }else{
+                $content = "['method' => '{$httpMethod}', 'route' => '{$controller}/{$action}/'],\n";
+            }
+            
             $fileContentExploded = array_values(array_filter(explode("\n", $fileContent)));
             
             foreach($fileContentExploded as $route){
                 
-                if(strcmp(trim($route), trim($content)) === 0){
+                if(trim($route, "\n") === trim($content, "\n")){
                     $hasRoute [] = $route;
                     break;
                 }
             }
             
             if(empty($hasRoute)){
-                file_put_contents($filePath, $fileContent . $content);
-                $filePathSource = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Documents/Routes.txt';
-                $filePathDestiny = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Router/Routes.php';
-                $fileContent = file_get_contents($filePathSource);
-                $content =  '<?php $this->routes = [' . "\n" . $fileContent . "];";
-                file_put_contents($filePathDestiny, $content);
+                file_put_contents($this->builderRoutesFilePath, $fileContent . $content);
+            }
+            
+            if(empty($hasRoute)){
+                
+                $productionRouterFilePath = $this->productionRoutesFilePath;
+                $fileContent = file_get_contents($this->builderRoutesFilePath);
+                $content = '<?php $this->routes = [' . "\n" . $fileContent . "];";
+                file_put_contents($productionRouterFilePath, $content);
             }
     }
 
     private function addNewController(){
-        
-            $filePath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Documents/Controller_Default.txt';
-            $fileContent = file_get_contents($filePath);
-            $fileContent = str_replace(["{{{controller}}}", "{{{comments}}}"], [$this->controller, $this->classComments], $fileContent);
-            if(!is_dir(substr($this->controllerFilePath, 0, -strlen($this->controller . ".php")))){
-                mkdir(substr($this->controllerFilePath, 0, -strlen($this->controller . ".php")));
+            
+            $fileControllerPath = $this->returnFilePath('controller');
+            $fileContent = file_get_contents($this->returnBuilderFilePath('controller'));
+            $fileContent = str_replace(["{{{controller}}}", "{{{comments}}}"], [$this->arguments["controller"], $this->arguments["classComments"]], $fileContent);
+            if(!is_dir(substr($this->returnFilePath('controller'), 0, -strlen($this->arguments["controller"] . ".php")))){
+                mkdir(substr($this->returnFilePath('controller'), 0, -strlen($this->arguments["controller"] . ".php")));
             }
-            file_put_contents($this->controllerFilePath, $fileContent);
+            
+            file_put_contents($fileControllerPath, $fileContent);
     }
 
-    public function create_action(){
-        $this->checkRoute();
-        $this->checkFolderAndFilesStructure();
-        $this->checkForClassMethod();
-        $this->addNewAction();
-        $this->checkRoute();
-        $this->checkFolderAndFilesStructure();
-        $this->checkForClassMethod();
-        $this->showStructureRelatory();
+    private function create_action(){
+        if(!$this->checkClassMethod($this->foldersPath['methodPath'])){
+            $this->addNewAction();
+        }else{
+            $this->echoABrief($this->checkClassMethod($this->foldersPath['methodPath']));
+        }
     }
 
     private function addNewAction(){
             
-            $fileContent = trim(file_get_contents($this->controllerFilePath));
-            $methodStructure = "\n\t/*\n\t\t" . $this->actionComments . "\n\t*/\n\t" . $this->methodVisibility . " function " . $this->action . "(){\n\n\t}\n}";
+            $fileContent = file_get_contents($this->returnFilePath('controller'));
+            $methodStructure = "\n\t/*\n\t\t" . $this->arguments["actionComments"] . "\n\t*/\n\t" . $this->arguments["methodVisibility"] . " function " . $this->arguments["action"] . "(){\n\n\t}\n}";
             $fileContent = substr($fileContent, 0, -1) . "\t" . $methodStructure;
-            file_put_contents($this->controllerFilePath, $fileContent); 
+            file_put_contents($this->returnFilePath('controller'), $fileContent); 
     }
 
     private function addNewTemplate(){
         
-            $templateDefaultPath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Documents/Template_Default.txt';
-            $fileContent = file_get_contents($templateDefaultPath);
-            if(!is_dir(substr($this->templateFilePath, 0, -strlen($this->controller . ".php")))){
-                mkdir(substr($this->templateFilePath, 0, -strlen($this->controller . ".php")));
+            $fileTemplatePath = $this->returnFilePath('template');
+            $fileContent = file_get_contents($this->returnBuilderFilePath('template'));
+            
+            if(!is_dir(substr($fileTemplatePath, 0, -strlen($this->arguments["controller"] . ".php")))){
+                mkdir(substr($fileTemplatePath, 0, -strlen($this->arguments["controller"] . ".php")));
             }
-            file_put_contents($this->templateFilePath, $fileContent);
+            file_put_contents($fileTemplatePath, $fileContent);
     }
 
     private function addNewPage(){
         
-            $headDefaultPath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Documents/Head_Default.txt';
-            $bodyDefaultPath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Documents/Body_Default.txt';
-            $footerDefaultPath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Documents/Footer_Default.txt';
-            $fileContentHead = file_get_contents($headDefaultPath);
-            $fileContentBody = file_get_contents($bodyDefaultPath);
-            $fileContentFooter = file_get_contents($footerDefaultPath);
-            if(!is_dir(substr($this->pageHeadFilePath, 0, -strlen("Head.php")))){
-                mkdir(substr($this->pageHeadFilePath, 0, -strlen("Head.php")));
+            $fileHeadPath = $this->returnFilePath('pageHead');
+            $fileBodyPath = $this->returnFilePath('pageBody');
+            $fileFoorterPath = $this->returnFilePath('pageFooter');
+            $fileContentHead = file_get_contents($this->returnBuilderFilePath('pageHead'));
+            $fileContentBody = file_get_contents($this->returnBuilderFilePath('pageBody'));
+            $fileContentFooter = file_get_contents($this->returnBuilderFilePath('pageFooter'));
+            if(!is_dir(substr($fileHeadPath, 0, -strlen("Head.php")))){
+                mkdir(substr($fileHeadPath, 0, -strlen("Head.php")));
             }
             
-            if(!is_dir(substr($this->pageBodyFilePath, 0, -strlen("Body.php")))){
-                mkdir(substr($this->pageBodyFilePath, 0, -strlen("Body.php")));
+            if(!is_dir(substr($fileBodyPath, 0, -strlen("Body.php")))){
+                mkdir(substr($fileBodyPath, 0, -strlen("Body.php")));
             }
 
-            if(!is_dir(substr($this->pageFooterFilePath, 0, -strlen("Footer.php")))){
-                mkdir(substr($this->pageFooterFilePath, 0, -strlen("Footer.php")));
+            if(!is_dir(substr($fileFoorterPath, 0, -strlen("Footer.php")))){
+                mkdir(substr($fileFoorterPath, 0, -strlen("Footer.php")));
             }
-            file_put_contents($this->pageHeadFilePath, $fileContentHead);
-            file_put_contents($this->pageBodyFilePath, $fileContentBody);
-            file_put_contents($this->pageFooterFilePath, $fileContentFooter);
+            file_put_contents($fileHeadPath, $fileContentHead);
+            file_put_contents($fileBodyPath, $fileContentBody);
+            file_put_contents($fileFoorterPath, $fileContentFooter);
     }
 
     private function addNewCss(){
         
-            $cssDefaultPath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Documents/Css_Default.txt';
+            $fileCssPath = $this->returnFilePath('css');
         
-            $fileContentCss = file_get_contents($cssDefaultPath);
-            if(!is_dir(substr($this->cssFilePath, 0, -strlen($this->controller . ".php")))){
-                mkdir(substr($this->cssFilePath, 0, -strlen($this->controller . ".php")));
+            $fileContentCss = file_get_contents($this->returnBuilderFilePath('css'));
+            if(!is_dir(substr($fileCssPath, 0, -strlen($this->arguments["controller"] . ".php")))){
+                mkdir(substr($fileCssPath, 0, -strlen($this->arguments["controller"] . ".php")));
             }
-            file_put_contents($this->cssFilePath, $fileContentCss);
+            file_put_contents($fileCssPath, $fileContentCss);
     }
 
 
     private function addNewJs(){
         
-            $jsDefaultPath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Documents/Js_Default.txt';
+            $fileJsPath = $this->returnFilePath('js');
         
-            $fileContentJs = file_get_contents($jsDefaultPath);
-            if(!is_dir(substr($this->jsFilePath, 0, -strlen($this->controller . ".php")))){
-                mkdir(substr($this->jsFilePath, 0, -strlen($this->controller . ".php")));
+            $fileContentJs = file_get_contents($this->returnBuilderFilePath('js'));
+            if(!is_dir(substr($fileJsPath, 0, -strlen($this->arguments["controller"] . ".php")))){
+                mkdir(substr($fileJsPath, 0, -strlen($this->arguments["controller"] . ".php")));
             }
-            file_put_contents($this->jsFilePath, $fileContentJs);
+            file_put_contents($fileJsPath, $fileContentJs);
     }
 
     public function create_all(){
-        $this->checkRoute();
-        $this->checkFolderAndFilesStructure();
-        $this->checkForClassMethod();
         $this->createAll();
-        $this->checkRoute();
-        $this->checkFolderAndFilesStructure();
-        $this->checkForClassMethod();
-        $this->showStructureRelatory();
     }
 
     private function createAll(){
-      
+        $foldersExixts = $this->validateFolderPaths();
+        
+        if(substr_count(implode("", $foldersExixts), "Not") === count($this->foldersPath) + 1){
             $this->addNewRoute();
             $this->addNewController();
             $this->addNewAction();
@@ -301,35 +390,43 @@ class Builder{
             $this->addNewPage();
             $this->addNewCss();
             $this->addNewJs();
+        }
+        $foldersExixts = [];
+        $foldersExixts = $this->validateFolderPaths();
+        $this->echoABrief($foldersExixts);
     }
 
     public function delete_all(){
-        $this->checkRoute();
-        $this->checkFolderAndFilesStructure();
-        $this->checkForClassMethod();
-        $this->deleteAll();
-        $this->checkRoute();
-        $this->checkFolderAndFilesStructure();
-        $this->checkForClassMethod();
-        $this->showStructureRelatory();
+        $foldersExixts = $this->validateFolderPaths();
+       
+        if($this->checkRoute()){
+            
+            $this->deleteAll();
+        }
+        $foldersExixts = [];
+        $foldersExixts = $this->validateFolderPaths();
+        $this->echoABrief($foldersExixts);
     }
 
     private function deleteAll(){
         
-        $filePath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Documents/Routes.txt';
-        $routeToBeDeleted = $this->httpMethod . " " . lcfirst($this->controller) . "/" . $this->action . "/";
-        $fileContent = file_get_contents($filePath);
+        $fileRoutePath = $this->builderRoutesFilePath;
+        $httpMethod = strtoupper($this->arguments['httpMethod']);
+        $controller = lcfirst($this->arguments['controller']);
+        $action = $this->arguments['action'];
+        $routeToBeDeleted = "['method' => '{$httpMethod}', 'route' => '{$controller}/{$action}/'],";
+        $fileContent = file_get_contents($fileRoutePath);
         $fileContent = str_replace($routeToBeDeleted, "", $fileContent);
-        file_put_contents($filePath, trim($fileContent));
+        file_put_contents($fileRoutePath, trim($fileContent));
         
         $pathAndFileName = [
-            $this->controllerFilePath => $this->controller . ".php" ,
-            $this->templateFilePath => $this->controller . ".php" ,
-            $this->pageHeadFilePath => "Head.php" ,
-            $this->pageBodyFilePath => "Body.php" ,
-            $this->pageFooterFilePath => "Footer.php" ,
-            $this->cssFilePath => $this->controller . ".css",
-            $this->jsFilePath => $this->controller . ".js",
+            $this->returnFilePath('controller') => $this->arguments["controller"] . ".php" ,
+            $this->returnFilePath('template') => $this->arguments["controller"] . ".php" ,
+            $this->returnFilePath('pageHead') => "Head.php" ,
+            $this->returnFilePath('pageBody') => "Body.php" ,
+            $this->returnFilePath('pageFooter') => "Footer.php" ,
+            $this->returnFilePath('css') => $this->arguments["controller"] . ".css",
+            $this->returnFilePath('js') => $this->arguments["controller"] . ".js",
         ];
 
        forEach($pathAndFileName as $key => $value){
@@ -349,6 +446,22 @@ class Builder{
             if(is_dir(substr($key, 0, -strlen($value)))){
                 rmdir(substr($key, 0, -strlen($value)));
             }
+        }
+    }
+
+    private function echoABrief($brief){
+        if(gettype($brief) === "string"){
+
+            echo ucfirst($brief);
+
+        }else if(gettype($brief) === "array"){
+
+            foreach($brief as $topic){
+                echo "<pre>";
+                echo ucfirst($topic);
+                echo "</pre>";
+            }
+
         }
     }
 }

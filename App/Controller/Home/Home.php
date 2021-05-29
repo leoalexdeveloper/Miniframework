@@ -18,17 +18,6 @@ class Home{
         (new View($this->uri));
     }
 	
-	/*
-		Novo metodo
-	*/
-	private function novaCasa(){
 
-	}
-	
-	/*
-		Novo metodo
-	*/
-	private function novaCasa(){
 
-	}
 }

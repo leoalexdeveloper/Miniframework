@@ -53,6 +53,9 @@ class Builder{
             }
         }
 
+        /* 
+            Paths of the folders and files that will be or was created
+        */
         $this->foldersPath = [
             "controllerFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/Controller/" . $this->arguments["controller"] . "/" . $this->arguments["controller"] . ".php",
             "templateFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/View/Templates/" . $this->arguments["controller"] . "/" . $this->arguments["controller"] . ".php",
@@ -64,6 +67,9 @@ class Builder{
             "methodPath" => "\\App\\Controller\\" . $this->arguments["controller"] . "\\" . $this->arguments["controller"],
         ];
 
+        /* 
+            Paths of the folders of default models to builder apply
+        */
         $this->builderFoldersPath = [
             "controllerFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/Documents/Controller_Default.txt",
             "templateFile" => $_SERVER["DOCUMENT_ROOT"] . SUB_FOLDER . "App/Documents/Template_Default.txt",
@@ -78,6 +84,12 @@ class Builder{
         $this->productionRoutesFilePath = $_SERVER['DOCUMENT_ROOT'] . SUB_FOLDER . 'App/Router/Routes.php';
     }
 
+    /* This function return the file path. 
+        Put like arguments the type of path.
+        This function will get the key of the $this->foldersPath and replace "File", 
+        remain only the type that will be compared with wantedPath
+        How to use: $this->returnFilePath('controller');
+    */
     private function returnFilePath($wantedPath){
         foreach($this->foldersPath as $key => $path){
             
@@ -89,6 +101,12 @@ class Builder{
         return;
     }
 
+    /* This function return the file path. 
+        Put like arguments the type of path.
+        This function will get the key of the $this->builderFoldersPath and replace "File", 
+        remain only the type that will be compared with wantedPath
+        How to use: $this->returnBuilderFilePath('controller');
+    */
     private function returnBuilderFilePath($wantedPath){
         foreach($this->builderFoldersPath as $key => $path){
             if(strpos($key, $wantedPath) > -1){
@@ -97,6 +115,10 @@ class Builder{
         }
         return;
     }
+
+    /* 
+        Validate if the dir and files exists;
+    */
 
     private function validateFolderPaths(){
         $hasFolder = [];
@@ -118,6 +140,9 @@ class Builder{
     }
 
 
+    /* 
+        method that execute the real methods
+    */
     public function exec(){
         $errors = [];
         switch($this->arguments["builderAction"]){
@@ -194,21 +219,26 @@ class Builder{
 
     public function check_route(){
         
-        $this->checkRoute();
+        $result = $this->checkRoute();
+        $result = (empty($result)) ? "The route NOT EXISTS." : $result;
+        $this->echoABrief($result);
     }
 
     private function checkRoute(){
+        
         $method = strtoupper($this->arguments["httpMethod"]);
         $controller = lcfirst($this->arguments["controller"]);
         $action = $this->arguments["action"];
-    
+        
         $file = file_get_contents($this->builderRoutesFilePath);
         $pattern = "['method' => '$method', 'route' => '$controller/$action/'],";
+        
         $file = explode("\n", $file);
 
         foreach($file as $route){
-            
+           
             if(trim($route) === trim($pattern)){
+                
                 return $route;
             }
         }
@@ -217,22 +247,21 @@ class Builder{
 
 
     public function check_all_routes(){
-        $this->checkAllRoutes();
+        $result = $this->checkAllRoutes();
+        $this->echoABrief($result);
     }
 
     private function checkAllRoutes(){
-        $file = file_get_contents($this->builderRoutesFilePath);
-        $file = explode(",\n", $file);
-        
-        foreach($file as $route){
-            $this->echoABrief($route . "<br><br>");
-        }
+        $routes = file_get_contents($this->builderRoutesFilePath);
+        $routes = explode(",\n", $routes);
+        return $routes;
     }
 
 
 
     public function check_class_method(){
         $hasMethod = $this->checkClassMethod($this->foldersPath['methodPath']);
+        $hasMethod = (empty($hasMethod)) ? "This method NOT EXISTS." : $hasMethod;
         $this->echoABrief($hasMethod);
     }
 
@@ -289,6 +318,8 @@ class Builder{
             }
     }
 
+
+
     private function addNewController(){
             
             $fileControllerPath = $this->returnFilePath('controller');
@@ -309,13 +340,16 @@ class Builder{
         }
     }
 
-    private function addNewAction(){
-            
+
+
+    private function addNewAction(){ 
             $fileContent = file_get_contents($this->returnFilePath('controller'));
             $methodStructure = "\n\t/*\n\t\t" . $this->arguments["actionComments"] . "\n\t*/\n\t" . $this->arguments["methodVisibility"] . " function " . $this->arguments["action"] . "(){\n\n\t}\n}";
             $fileContent = substr($fileContent, 0, -1) . "\t" . $methodStructure;
             file_put_contents($this->returnFilePath('controller'), $fileContent); 
     }
+
+
 
     private function addNewTemplate(){
         
@@ -327,6 +361,8 @@ class Builder{
             }
             file_put_contents($fileTemplatePath, $fileContent);
     }
+
+
 
     private function addNewPage(){
         
@@ -352,6 +388,8 @@ class Builder{
             file_put_contents($fileFoorterPath, $fileContentFooter);
     }
 
+
+
     private function addNewCss(){
         
             $fileCssPath = $this->returnFilePath('css');
@@ -362,6 +400,7 @@ class Builder{
             }
             file_put_contents($fileCssPath, $fileContentCss);
     }
+
 
 
     private function addNewJs(){
@@ -375,6 +414,10 @@ class Builder{
             file_put_contents($fileJsPath, $fileContentJs);
     }
 
+
+    /* 
+        Create all basic structure: Controller, Template, Pages, Css and Js files.
+    */
     public function create_all(){
         $this->createAll();
     }
@@ -390,19 +433,32 @@ class Builder{
             $this->addNewPage();
             $this->addNewCss();
             $this->addNewJs();
+        }else{
+            $this->echoABrief('All results must NOT EXISTS to create the structure!');   
         }
         $foldersExixts = [];
         $foldersExixts = $this->validateFolderPaths();
         $this->echoABrief($foldersExixts);
     }
 
+
+
     public function delete_all(){
         $foldersExixts = $this->validateFolderPaths();
-       
+    
         if($this->checkRoute()){
             
-            $this->deleteAll();
+            if($this->arguments['controller'] === "Builder"){
+                $this->echoABrief("Do you really want to delete the builder controller?");
+                
+            }else{
+                $this->deleteAll();
+            }
+            
+        }else{
+            $this->echoABrief("The files not be deleted because this route is not there");
         }
+
         $foldersExixts = [];
         $foldersExixts = $this->validateFolderPaths();
         $this->echoABrief($foldersExixts);
@@ -415,50 +471,45 @@ class Builder{
         $controller = lcfirst($this->arguments['controller']);
         $action = $this->arguments['action'];
         $routeToBeDeleted = "['method' => '{$httpMethod}', 'route' => '{$controller}/{$action}/'],";
+        
         $fileContent = file_get_contents($fileRoutePath);
         $fileContent = str_replace($routeToBeDeleted, "", $fileContent);
         file_put_contents($fileRoutePath, trim($fileContent));
         
-        $pathAndFileName = [
-            $this->returnFilePath('controller') => $this->arguments["controller"] . ".php" ,
-            $this->returnFilePath('template') => $this->arguments["controller"] . ".php" ,
-            $this->returnFilePath('pageHead') => "Head.php" ,
-            $this->returnFilePath('pageBody') => "Body.php" ,
-            $this->returnFilePath('pageFooter') => "Footer.php" ,
-            $this->returnFilePath('css') => $this->arguments["controller"] . ".css",
-            $this->returnFilePath('js') => $this->arguments["controller"] . ".js",
-        ];
-
-       forEach($pathAndFileName as $key => $value){
-            $dirPath = substr($key, 0, -strlen($value));
+        forEach($this->foldersPath as $key => $value){
+            $dirPath = substr($value, 0, strrpos($value, "/"));
+            
             if(is_dir($dirPath)){
+                
                 foreach(scandir($dirPath) as $file){
                     
                     if(($file === ".") || ($file === "..")){
                         continue;
                     }
-                    if(file_exists($dirPath . $file)){
-                        unlink($dirPath . $file);
+                    if(file_exists($value)){
+                        unlink($value);
                     }     
                 }
             }   
 
-            if(is_dir(substr($key, 0, -strlen($value)))){
-                rmdir(substr($key, 0, -strlen($value)));
+            if(is_dir($dirPath) && count(scandir($dirPath)) === 2){
+                rmdir($dirPath);
             }
         }
     }
 
+
+
     private function echoABrief($brief){
         if(gettype($brief) === "string"){
 
-            echo ucfirst($brief);
+            echo ucfirst($brief) . "<br><br>";
 
         }else if(gettype($brief) === "array"){
 
             foreach($brief as $topic){
                 echo "<pre>";
-                echo ucfirst($topic);
+                echo ucfirst($topic) . "<br><br>";
                 echo "</pre>";
             }
 
